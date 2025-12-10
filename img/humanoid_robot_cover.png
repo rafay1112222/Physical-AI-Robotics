@@ -1,0 +1,14 @@
+<svg width="400" height="600" viewBox="0 0 400 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="600" fill="#1a1a2e"/>
+  <rect x="20" y="20" width="360" height="560" fill="#0f3460" stroke="#e0e0e0" stroke-width="4"/>
+  <text x="200" y="200" font-family="Arial, sans-serif" font-size="36" fill="#ffffff" text-anchor="middle">EMBODIED</text>
+  <text x="200" y="245" font-family="Arial, sans-serif" font-size="36" fill="#ffffff" text-anchor="middle">INTELLIGENCE</text>
+  <text x="200" y="320" font-family="Arial, sans-serif" font-size="24" fill="#bbbbbb" text-anchor="middle">Physical AI &amp; Humanoid Robotics</text>
+  <text x="200" y="350" font-family="Arial, sans-serif" font-size="24" fill="#bbbbbb" text-anchor="middle">Textbook Portal</text>
+  <rect x="125" y="420" width="150" height="50" fill="#0f3460" rx="5" ry="5"/>
+  <text x="200" y="450" font-family="Arial, sans-serif" font-size="18" fill="#ffffff" text-anchor="middle">Book Cover</text>
+  <circle cx="100" cy="500" r="20" fill="#e0e0e0"/>
+  <circle cx="300" cy="500" r="20" fill="#e0e0e0"/>
+  <path d="M100 500 L150 480 L250 480 L300 500" stroke="#e0e0e0" stroke-width="3" fill="none"/>
+  <path d="M100 500 L150 520 L250 520 L300 500" stroke="#e0e0e0" stroke-width="3" fill="none"/>
+</svg>

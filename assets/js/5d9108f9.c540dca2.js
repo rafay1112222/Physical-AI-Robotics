@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkphysical_ai_robotics=globalThis.webpackChunkphysical_ai_robotics||[]).push([[5389],{2602:a=>{a.exports=JSON.parse('{"metadata":{"permalink":"/Physical-AI-Robotics/blog","page":1,"postsPerPage":10,"totalPages":1,"totalCount":4,"blogDescription":"Blog","blogTitle":"Blog"}}')}}]);
