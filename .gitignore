@@ -18,3 +18,12 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+
+
+# Inside your .gitignore file
+# Python cache files
+__pycache__/
+*.pyc
+# Temporary/Test files (Adjust these if you need the test files committed)
+3.19.5

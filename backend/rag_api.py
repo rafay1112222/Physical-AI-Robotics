@@ -1,141 +1,140 @@
+"""
+RAG API for Physical AI & Humanoid Robotics Textbook Portal
+Implements a Retrieval-Augmented Generation API using Context7 and Google Generative AI.
+Connects to Qdrant for retrieval from the 'embodied_intelligence_rag' collection.
+"""
+
 import os
-import dotenv
-from qdrant_client import QdrantClient
-from pydantic import BaseModel # NEW: For data validation
-from fastapi import FastAPI, HTTPException # NEW: For the web service
-from fastapi.middleware.cors import CORSMiddleware # NEW: To allow web access
+import logging
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uvicorn
 
-# Modern LangChain libraries (your working versions)
-from langchain_qdrant import QdrantVectorStore
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
-from langchain_core.prompts import ChatPromptTemplate
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Legacy LangChain chain helpers (your working versions)
-from langchain_classic.chains.combine_documents import create_stuff_documents_chain
-from langchain_classic.chains.retrieval import create_retrieval_chain
+app = FastAPI(title="Physical AI & Robotics RAG API",
+              description="Retrieval-Augmented Generation API for the Physical AI & Humanoid Robotics textbook",
+              version="1.0.0")
 
-# --- 1. FastAPI Setup ---
-app = FastAPI(
-    title="Physical AI RAG Chatbot API",
-    version="1.0.0"
-)
+# Models and data storage
+class QueryRequest(BaseModel):
+    query: str
 
-# Crucial for browser-based access (allowing your book's web page to talk to this API)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Allows ALL origins. Be more specific in production!
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+class RAGResponse(BaseModel):
+    query: str
+    response: str
 
-
-# --- 2. Request Schema (How the frontend sends data) ---
-class QueryInput(BaseModel):
-    """Defines the structure of the incoming chat request."""
-    query: str # The user's question
-
-class QueryResponse(BaseModel):
-    """Defines the structure of the outgoing response."""
-    answer: str
-    source_documents: list
-
-
-# --- 3. Global RAG Chain Initialization ---
-# This dictionary will hold the RAG chain after setup
-rag_chain = None 
-COLLECTION_NAME = "physical_ai_textbook"
-K = 3
+# Global Context7 client
+ctx7 = None
 
 @app.on_event("startup")
-async def startup_event():
-    """Initializes the RAG components only once when the server starts."""
-    global rag_chain, COLLECTION_NAME, K
-
-    # Load Environment Variables
-    dotenv.load_dotenv()
-    QDRANT_URL = os.getenv("QDRANT_URL")
-    QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
-    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
-    if not all([QDRANT_URL, QDRANT_API_KEY, GEMINI_API_KEY]):
-        raise RuntimeError("Missing required environment variables for RAG initialization.")
-    
+def startup_event():
+    """
+    Initialize the Context7 client when the application starts.
+    """
+    global ctx7
     try:
-        # Initialize Qdrant + Embeddings
-        qdrant_client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
-        embeddings_model = GoogleGenerativeAIEmbeddings(
-            model="models/text-embedding-004",
-            task_type="retrieval_query",
-            google_api_key=GEMINI_API_KEY
-        )
-
-        vectorstore = QdrantVectorStore(
-            client=qdrant_client,
-            collection_name=COLLECTION_NAME,
-            embedding=embeddings_model
-        )
-
-        # Build RAG Chain
-        llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash",
-            temperature=0.3,
-            google_api_key=GEMINI_API_KEY
-        )
-
-        SYSTEM_PROMPT = """
-        You are a knowledgeable AI Assistant specialized in Physical AI and Humanoid Robotics.
-        You must ONLY answer using the context provided.
-        Rules: 1. If answer is NOT in context → say: "I am sorry, but I cannot find that information in the Physical AI textbook."
-        2. Cite context chunk numbers clearly (e.g., [Source 1], [Source 2]).
-        """
-
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", SYSTEM_PROMPT + "\n\nContext: {context}"),
-            ("human", "{input}")
-        ])
-
-        document_chain = create_stuff_documents_chain(llm, prompt)
-        retriever = vectorstore.as_retriever(search_kwargs={"k": K})
-        # IMPORTANT: We need to enable returning source documents to send them to the API user
-        rag_chain = create_retrieval_chain(retriever, document_chain) 
-        
-        print("✅ RAG Chain Initialized Successfully!")
-
+        from context7 import Context7Client
+        ctx7 = Context7Client()
+        logger.info("Context7 client initialized successfully")
     except Exception as e:
-        print(f"❌ Initialization Error: {e}")
-        raise HTTPException(status_code=500, detail=f"RAG service failed to initialize: {e}")
-
-
-# --- 4. API Endpoints ---
+        logger.error(f"Failed to initialize Context7 client: {str(e)}")
+        raise
 
 @app.get("/")
-def health_check():
-    """A simple health check endpoint."""
-    return {"status": "ok", "message": "Physical AI RAG API is running."}
+def read_root():
+    return {"message": "Physical AI & Robotics RAG API",
+            "description": "A Retrieval-Augmented Generation API for the Physical AI & Humanoid Robotics textbook"}
 
-
-@app.post("/chat", response_model=QueryResponse)
-async def chat_endpoint(input_data: QueryInput):
-    """The main endpoint to receive a question and return the RAG answer."""
-    if not rag_chain:
-         raise HTTPException(status_code=503, detail="RAG service is still starting up or failed initialization.")
-
+@app.post("/api/rag_chat", response_model=RAGResponse)
+def rag_chat(request: QueryRequest):
+    """
+    RAG chat endpoint that processes the user's query using Qdrant and Gemini.
+    """
     try:
-        # Invoke the working RAG chain
-        response = rag_chain.invoke({"input": input_data.query})
-        
-        # Extract source documents for citation on the frontend
-        source_docs = []
-        if 'context' in response and response['context']:
-             for doc in response['context']:
-                  source_docs.append(doc.page_content[:150] + "...") # Send first 150 chars as source
+        # Import required libraries inside the function to avoid import-time issues
+        from qdrant_client import QdrantClient
+        import google.generativeai as genai
 
-        return QueryResponse(
-            answer=response["answer"],
-            source_documents=source_docs
+        # Get API key from environment variable
+        gemini_api_key = os.getenv("GEMINI_API_KEY")
+        if not gemini_api_key:
+            raise ValueError("GEMINI_API_KEY environment variable is not set")
+
+        # Configure the Gemini API
+        genai.configure(api_key=gemini_api_key)
+
+        # Initialize Qdrant client
+        qdrant_host = os.getenv("QDRANT_HOST", "localhost")
+        qdrant_port = int(os.getenv("QDRANT_PORT", 6333))
+
+        qdrant_client = QdrantClient(host=qdrant_host, port=qdrant_port)
+
+        # Generate embedding for the query using Gemini
+        embedding_result = genai.embed_content(
+            model="embedding-001",
+            content=[request.query],
+            task_type="retrieval_query"
         )
 
+        query_embedding = embedding_result['embedding']
+
+        # Search using the embedding in Qdrant
+        search_results = qdrant_client.search(
+            collection_name="embodied_intelligence_rag",
+            query_vector=query_embedding,
+            limit=4
+        )
+
+        # Extract context from search results
+        retrieved_docs = []
+        for result in search_results:
+            # Updated to use proper Qdrant result structure
+            if hasattr(result, 'payload') and result.payload and 'content' in result.payload:
+                retrieved_docs.append({
+                    'content': result.payload['content'],
+                    'source': result.payload.get('source', 'Unknown'),
+                    'title': result.payload.get('title', 'Untitled')
+                })
+            elif 'payload' in result and result['payload'] and 'content' in result['payload']:
+                retrieved_docs.append({
+                    'content': result['payload']['content'],
+                    'source': result['payload'].get('source', 'Unknown'),
+                    'title': result['payload'].get('title', 'Untitled')
+                })
+
+        # Format the context using Context7's format_context method
+        context_str = ctx7.format_context(retrieved_docs) if retrieved_docs else "No relevant context found."
+
+        # Create a prompt for Gemini with the retrieved context
+        prompt = f"""You are an AI assistant specializing in Physical AI & Humanoid Robotics.
+        Use the following pieces of context to answer the question at the end.
+        If you don't know the answer, just say that you don't know, don't try to make up an answer.
+        Keep the answer concise but informative and cite sources when possible.
+
+        Context from the Physical AI & Robotics textbook:
+        {context_str}
+
+        Question: {request.query}
+        Helpful Answer:"""
+
+        # Generate response using Gemini
+        model = genai.GenerativeModel('gemini-pro')
+        response = model.generate_content(prompt)
+
+        # Extract text from response
+        if hasattr(response, 'text'):
+            answer = response.text
+        else:
+            answer = "I was unable to generate a response. Please try again."
+
+        return RAGResponse(query=request.query, response=answer)
+
     except Exception as e:
-        print(f"RAG Chain Error: {e}")
-        raise HTTPException(status_code=500, detail=f"Internal RAG processing error: {e}")
+        logger.error(f"Error processing RAG chat query: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error during RAG processing: {str(e)}")
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)

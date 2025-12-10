@@ -1,8 +1,8 @@
 import React from 'react';
-import Layout from '@theme-init/Layout';
+import Layout from '@theme-original/Layout';
 import Chatbot from '@site/src/components/Chatbot';
 
-export default function CustomLayout(props) {
+export default function LayoutWrapper(props) {
   return (
     <Layout {...props}>
       {props.children}

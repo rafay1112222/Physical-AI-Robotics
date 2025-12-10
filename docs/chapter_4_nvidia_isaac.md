@@ -1,5 +1,5 @@
 ---
-title: Chapter 4: The AI-Robot Brain (NVIDIA Isaac Platform)
+title: "Chapter 4: The AI-Robot Brain (NVIDIA Isaac Platform)"
 sidebar_position: 4
 ---
 

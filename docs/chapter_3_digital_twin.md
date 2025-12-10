@@ -1,5 +1,5 @@
 ---
-title: Chapter 3: Building the Digital Twin (Gazebo & Unity)
+title: "Chapter 3: Building the Digital Twin (Gazebo & Unity)"
 sidebar_position: 3
 ---
 

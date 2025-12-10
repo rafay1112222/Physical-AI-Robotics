@@ -1,0 +1,264 @@
+---
+title: 'EMBODIED INTELLIGENCE: Textbook Portal'
+slug: /
+hide_table_of_contents: true
+---
+
+import styles from './index.module.css';
+
+{/* Custom CSS styles */}
+<style>{`
+  :root {
+    --dark-bg: #0a0a12;
+    --card-bg: #121220;
+    --card-hover-bg: #1a1a2e;
+    --primary-accent: #4f46e5;
+    --secondary-accent: #8b5cf6;
+    --text-primary: #f3f4f6;
+    --text-secondary: #d1d5db;
+    --border-radius: 12px;
+    --transition-speed: 0.3s;
+  }
+
+  body {
+    background-color: var(--dark-bg);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 0;
+  }
+
+  .hero-section {
+    background: linear-gradient(135deg, #0a0a12 0%, #1a1a2e 100%);
+    padding: 6rem 1rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-title {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    background: linear-gradient(90deg, #8b5cf6, #4f46e5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-subtitle {
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .nav-button {
+    background: linear-gradient(90deg, var(--primary-accent), var(--secondary-accent));
+    color: white;
+    padding: 1rem 2.5rem;
+    border-radius: var(--border-radius);
+    font-size: 1.2rem;
+    text-decoration: none;
+    display: inline-block;
+    transition: var(--transition-speed);
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+  }
+
+  .nav-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(79, 70, 229, 0.6);
+  }
+
+  .section-title {
+    font-size: 2.5rem;
+    text-align: center;
+    margin: 4rem 0 2rem;
+    color: var(--text-primary);
+    position: relative;
+    padding-bottom: 1rem;
+  }
+
+  .section-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-accent), var(--secondary-accent));
+    border-radius: 2px;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    padding: 0 2rem;
+    margin: 2rem 0 4rem;
+  }
+
+  .feature-card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    text-align: center;
+    transition: var(--transition-speed);
+    border: 1px solid rgba(79, 70, 229, 0.2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-accent), var(--secondary-accent));
+  }
+
+  .feature-card:hover {
+    transform: translateY(-10px);
+    background: var(--card-hover-bg);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(139, 92, 246, 0.2);
+  }
+
+  .feature-card h3 {
+    color: var(--primary-accent);
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+  }
+
+  .feature-card p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .author-attribution {
+    text-align: center;
+    margin: 4rem 0 2rem;
+    padding: 1rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    font-size: 1.2rem;
+  }
+
+  @media (max-width: 768px) {
+    .hero-title {
+      font-size: 2.5rem;
+    }
+
+    .hero-subtitle {
+      font-size: 1.2rem;
+    }
+
+    .section-title {
+      font-size: 2rem;
+    }
+
+    .card-grid {
+      grid-template-columns: 1fr;
+      padding: 0 1rem;
+    }
+  }
+`}</style>
+
+<div className="hero-section">
+  <h1 className="hero-title">EMBODIED INTELLIGENCE</h1>
+  <p className="hero-subtitle">Physical AI & Humanoid Robotics - A comprehensive textbook on building intelligent robotic systems</p>
+  <a className="nav-button" href="/docs/chapter_1_foundations">
+    Start Reading
+  </a>
+</div>
+
+<div className="section-container">
+  <h2 className="section-title">The AI Development Spectrum</h2>
+  <div className="card-grid">
+    <div className="feature-card">
+      <h3>ROS 2 Fundamentals</h3>
+      <p>Master the Robot Operating System 2 framework for building robust, distributed robotic applications with real-time communication and hardware abstraction.</p>
+    </div>
+
+    <div className="feature-card">
+      <h3>Isaac Sim</h3>
+      <p>Learn to create realistic simulation environments using NVIDIA Isaac Sim for training and testing AI agents before deployment to physical robots.</p>
+    </div>
+
+    <div className="feature-card">
+      <h3>Vision-Language-Action (VLA)</h3>
+      <p>Develop embodied AI systems that perceive, reason, and act by integrating vision, language, and motor control in unified neural architectures.</p>
+    </div>
+  </div>
+</div>
+
+<div className="section-container">
+  <h2 className="section-title">What Makes This Book Different</h2>
+  <div className="card-grid">
+    <div className="feature-card">
+      <h3>Sim-to-Real Transfer</h3>
+      <p>Bridge the reality gap with domain randomization techniques and advanced transfer learning methods for seamless simulation-to-physical deployment.</p>
+    </div>
+
+    <div className="feature-card">
+      <h3>Humanoid Kinematics</h3>
+      <p>Master forward and inverse kinematics for complex multi-joint robotic systems, from bipedal walkers to dexterous manipulators.</p>
+    </div>
+
+    <div className="feature-card">
+      <h3>Embodied Cognition</h3>
+      <p>Understand how physical interaction with the environment shapes intelligent behavior in robotic systems.</p>
+    </div>
+
+    <div className="feature-card">
+      <h3>Deep Reinforcement Learning</h3>
+      <p>Implement advanced RL algorithms specifically tailored for continuous control tasks in robotic manipulation and locomotion.</p>
+    </div>
+
+    <div className="feature-card">
+      <h3>Multi-Modal Perception</h3>
+      <p>Combine visual, tactile, and auditory sensing for comprehensive environmental understanding and decision making.</p>
+    </div>
+
+    <div className="feature-card">
+      <h3>Real-Time Control Systems</h3>
+      <p>Design high-frequency control loops optimized for real-time performance in dynamic environments.</p>
+    </div>
+  </div>
+</div>
+
+<div className="section-container">
+  <h2 className="section-title">Organizational AI Maturity/Architecture</h2>
+  <div className="card-grid">
+    <div className="feature-card">
+      <h3>Sim Rig</h3>
+      <p>High-performance computing infrastructure optimized for running complex physics simulations and training AI models.</p>
+    </div>
+
+    <div className="feature-card">
+      <h3>Edge Brain</h3>
+      <p>Dedicated hardware for real-time inference and control, designed to operate in resource-constrained robotic environments.</p>
+    </div>
+
+    <div className="feature-card">
+      <h3>Sensors</h3>
+      <p>Cutting-edge perception technology including cameras, LiDAR, IMUs, and tactile sensors for comprehensive environmental awareness.</p>
+    </div>
+
+    <div className="feature-card">
+      <h3>Actuators</h3>
+      <p>Advanced motor systems and control electronics enabling precise, dynamic movement and manipulation capabilities.</p>
+    </div>
+  </div>
+</div>
+
+<div className="author-attribution">
+  <p>Author: Abdur Rafay</p>
+</div>

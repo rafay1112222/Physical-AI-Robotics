@@ -1,5 +1,5 @@
 ---
-title: Chapter 2: The Robotic Nervous System (ROS 2)
+title: "Chapter 2: The Robotic Nervous System (ROS 2)"
 sidebar_position: 2
 ---
 

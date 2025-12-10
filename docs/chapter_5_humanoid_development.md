@@ -1,5 +1,5 @@
 ---
-title: Chapter 5: Humanoid Robot Development
+title: "Chapter 5: Humanoid Robot Development"
 sidebar_position: 5
 ---
 

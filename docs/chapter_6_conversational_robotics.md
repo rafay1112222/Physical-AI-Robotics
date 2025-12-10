@@ -1,5 +1,5 @@
 ---
-title: Chapter 6: Conversational Robotics and VLA (Vision-Language-Action)
+title: "Chapter 6: Conversational Robotics and VLA (Vision-Language-Action)"
 sidebar_position: 6
 ---
 

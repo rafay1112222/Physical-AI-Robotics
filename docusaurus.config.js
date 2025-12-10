@@ -105,7 +105,7 @@ async function createConfig() {
           items: [
             {
               type: 'docSidebar',
-              sidebarId: 'tutorialSidebar',
+              sidebarId: 'textbookSidebar',
               position: 'left',
               label: 'Textbook Chapters', // UPDATED NAV LABEL
             },

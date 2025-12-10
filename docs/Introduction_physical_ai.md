@@ -1,11 +1,11 @@
 ---
-title: Chapter 1: Introduction to Physical AI and Embodied Intelligence
-slug: /chapter_1_intro_physical_ai
+title: "Introduction to Physical AI and Embodied Intelligence"
+slug: /intro_physical_ai
 ---
 
-# Chapter 1: Introduction to Physical AI and Embodied Intelligence
+# Introduction to Physical AI and Embodied Intelligence
 
-## 1.1 Foundations of Physical AI and Embodied Intelligence
+## 1 Foundations of Physical AI and Embodied Intelligence
 
 Physical AI, often intertwined with the concept of embodied intelligence, represents a paradigm shift from purely digital artificial intelligence. While traditional AI systems operate within computational environments, processing data and executing algorithms without direct interaction with the physical world, Physical AI focuses on intelligent agents that inhabit and interact with physical environments. Embodied intelligence posits that an agent's physical form, sensory capabilities, and motor skills are integral to its cognitive processes and learning.
 
@@ -17,7 +17,7 @@ Physical AI, often intertwined with the concept of embodied intelligence, repres
 *   **Real-world Uncertainty and Variability:** The physical world is inherently noisy, unpredictable, and highly variable. Physical AI systems must be robust enough to handle these real-world challenges, unlike the more controlled environments often encountered by purely digital AI.
 *   **Learning through Experience:** Much of the learning in Physical AI comes from direct physical interaction and experimentation, leading to a deeper, more grounded understanding of causality and consequences.
 
-## 1.2 Overview of the Humanoid Robotics Landscape
+## 2 Overview of the Humanoid Robotics Landscape
 
 Humanoid robotics stands as a frontier in Physical AI, aiming to create robots that mimic human form and capabilities. This field seeks to leverage the advantages of human-like bodies—dexterity, bipedal locomotion, and interaction with human-centric environments—to develop highly versatile and adaptable intelligent machines.
 
@@ -31,7 +31,7 @@ Key aspects of the humanoid robotics landscape include:
 
 Notable projects and companies in this space include Boston Dynamics (Atlas), Agility Robotics (Digit), Honda (ASIMO), and various research institutions pushing the boundaries of humanoid capabilities.
 
-## 1.3 The Shift from Digital AI to Robots That Understand Physical Laws
+## 3 The Shift from Digital AI to Robots That Understand Physical Laws
 
 The evolution from digital AI to Physical AI, particularly in robotics, signifies a profound shift in how intelligence is conceived and implemented. Early AI focused on symbolic reasoning and expert systems, then moved to machine learning and deep learning, excelling in pattern recognition and prediction within digital datasets. However, these digital successes often struggle when directly applied to physical embodiment because they lack an intrinsic understanding of the physical world.
 
@@ -44,7 +44,7 @@ Robots that understand physical laws are capable of:
 
 This shift is driven by advancements in sensory perception, real-time control algorithms, robust mechanical designs, and computational power that allows for complex physics simulations and reinforcement learning in physical environments.
 
-## 1.4 An Introduction to Key Sensor Systems
+## 4 An Introduction to Key Sensor Systems
 
 For a robot to interact intelligently with the physical world, it requires sophisticated sensory input. These sensors provide the data necessary for perception, localization, mapping, and interaction.
 
