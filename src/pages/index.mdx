@@ -3,7 +3,7 @@ title: 'EMBODIED INTELLIGENCE: Textbook Portal'
 slug: /
 hide_table_of_contents: true
 ---
-
+import Link from '@docusaurus/Link'; // <--- ADD THIS LINE
 import styles from './index.module.css';
 
 {/* Custom CSS styles */}
@@ -174,9 +174,9 @@ import styles from './index.module.css';
 <div className="hero-section">
   <h1 className="hero-title">EMBODIED INTELLIGENCE</h1>
   <p className="hero-subtitle">Physical AI & Humanoid Robotics - A comprehensive textbook on building intelligent robotic systems</p>
-<a className="nav-button" href="/docs/intro_physical_ai">
+<Link className="nav-button" to="/docs/intro_physical_ai">
     Start Reading
-</a>
+  </Link>
 </div>
 
 <div className="section-container">
