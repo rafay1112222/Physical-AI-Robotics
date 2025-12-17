@@ -1,140 +1,153 @@
-"""
-RAG API for Physical AI & Humanoid Robotics Textbook Portal
-Implements a Retrieval-Augmented Generation API using Context7 and Google Generative AI.
-Connects to Qdrant for retrieval from the 'embodied_intelligence_rag' collection.
-"""
-
 import os
-import logging
+import sys
+import dotenv
+from qdrant_client import QdrantClient
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-import uvicorn
+from fastapi.middleware.cors import CORSMiddleware # Added CORS
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# --- IMPORTS FOR LCEL, GEMINI, & MEMORY ---
+from langchain_qdrant import QdrantVectorStore
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.chat_history import InMemoryChatMessageHistory 
+from langchain_classic.chains.combine_documents import create_stuff_documents_chain
+from langchain_classic.chains.retrieval import create_retrieval_chain
+from langchain_classic.chains.history_aware_retriever import create_history_aware_retriever
+from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
 
-app = FastAPI(title="Physical AI & Robotics RAG API",
-              description="Retrieval-Augmented Generation API for the Physical AI & Humanoid Robotics textbook",
-              version="1.0.0")
+# --- FastAPI Initialization ---
+app = FastAPI(title="Physical AI RAG Chatbot API")
 
-# Models and data storage
-class QueryRequest(BaseModel):
-    query: str
+# --- CORS Configuration (Crucial for Frontend Communication) ---
+# Allows communication from the frontend (which is likely on a different port/origin)
+origins = ["*"] # Using "*" allows all origins for easy testing
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"], 
+    allow_headers=["*"], 
+)
+# --------------------------
 
-class RAGResponse(BaseModel):
-    query: str
-    response: str
+# --- Session Management (CRITICAL) ---
+# Stores chat history for each unique session ID sent by the frontend
+sessions = {}
 
-# Global Context7 client
-ctx7 = None
+# Pydantic model for the incoming JSON request
+class ChatRequest(BaseModel):
+    user_input: str
+    session_id: str
+    # The frontend needs to send the previous history for stateful conversation
+    history: list[dict] = [] 
 
-@app.on_event("startup")
-def startup_event():
-    """
-    Initialize the Context7 client when the application starts.
-    """
-    global ctx7
+# -------------------------------
+# 1. Configuration and Environment Load
+# -------------------------------
+dotenv.load_dotenv()
+QDRANT_URL = os.getenv("QDRANT_URL")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+COLLECTION_NAME = "physical_ai_textbook"
+K = 5
+
+if not all([QDRANT_URL, QDRANT_API_KEY, GEMINI_API_KEY]):
+    print("❌ ERROR: Missing environment variables for RAG setup.")
+    sys.exit(1)
+
+
+# -------------------------------
+# 2. RAG Chain Initialization (runs ONCE when API starts)
+# -------------------------------
+def initialize_rag_chain():
     try:
-        from context7 import Context7Client
-        ctx7 = Context7Client()
-        logger.info("Context7 client initialized successfully")
-    except Exception as e:
-        logger.error(f"Failed to initialize Context7 client: {str(e)}")
-        raise
-
-@app.get("/")
-def read_root():
-    return {"message": "Physical AI & Robotics RAG API",
-            "description": "A Retrieval-Augmented Generation API for the Physical AI & Humanoid Robotics textbook"}
-
-@app.post("/api/rag_chat", response_model=RAGResponse)
-def rag_chat(request: QueryRequest):
-    """
-    RAG chat endpoint that processes the user's query using Qdrant and Gemini.
-    """
-    try:
-        # Import required libraries inside the function to avoid import-time issues
-        from qdrant_client import QdrantClient
-        import google.generativeai as genai
-
-        # Get API key from environment variable
-        gemini_api_key = os.getenv("GEMINI_API_KEY")
-        if not gemini_api_key:
-            raise ValueError("GEMINI_API_KEY environment variable is not set")
-
-        # Configure the Gemini API
-        genai.configure(api_key=gemini_api_key)
-
-        # Initialize Qdrant client
-        qdrant_host = os.getenv("QDRANT_HOST", "localhost")
-        qdrant_port = int(os.getenv("QDRANT_PORT", 6333))
-
-        qdrant_client = QdrantClient(host=qdrant_host, port=qdrant_port)
-
-        # Generate embedding for the query using Gemini
-        embedding_result = genai.embed_content(
-            model="embedding-001",
-            content=[request.query],
-            task_type="retrieval_query"
+        # 2.1 Initialize Qdrant + Embeddings + Retriever
+        qdrant_client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
+        embeddings_model = GoogleGenerativeAIEmbeddings(
+            model="models/text-embedding-004", task_type="retrieval_query", google_api_key=GEMINI_API_KEY
         )
-
-        query_embedding = embedding_result['embedding']
-
-        # Search using the embedding in Qdrant
-        search_results = qdrant_client.search(
-            collection_name="embodied_intelligence_rag",
-            query_vector=query_embedding,
-            limit=4
+        vectorstore = QdrantVectorStore(
+            client=qdrant_client, collection_name=COLLECTION_NAME, embedding=embeddings_model
         )
+        retriever = vectorstore.as_retriever(search_kwargs={"k": K})
 
-        # Extract context from search results
-        retrieved_docs = []
-        for result in search_results:
-            # Updated to use proper Qdrant result structure
-            if hasattr(result, 'payload') and result.payload and 'content' in result.payload:
-                retrieved_docs.append({
-                    'content': result.payload['content'],
-                    'source': result.payload.get('source', 'Unknown'),
-                    'title': result.payload.get('title', 'Untitled')
-                })
-            elif 'payload' in result and result['payload'] and 'content' in result['payload']:
-                retrieved_docs.append({
-                    'content': result['payload']['content'],
-                    'source': result['payload'].get('source', 'Unknown'),
-                    'title': result['payload'].get('title', 'Untitled')
-                })
+        # 2.2 LLM and Prompts Setup
+        llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.3, google_api_key=GEMINI_API_KEY)
+        
+        SYSTEM_PROMPT = """You are a knowledgeable AI Assistant specialized in Physical AI and Humanoid Robotics.
+You must ONLY answer using the context provided.
+Rules:
+1. If answer is NOT in context -> say: "I am sorry, but I cannot find that information in the Physical AI textbook."
+2. Cite context chunk numbers (where applicable)."""
 
-        # Format the context using Context7's format_context method
-        context_str = ctx7.format_context(retrieved_docs) if retrieved_docs else "No relevant context found."
+        qa_prompt = ChatPromptTemplate.from_messages([
+            ("system", SYSTEM_PROMPT + "\n\nContext: {context}"),
+            MessagesPlaceholder("chat_history"),
+            ("human", "{input}") 
+        ])
+        document_chain = create_stuff_documents_chain(llm, qa_prompt)
 
-        # Create a prompt for Gemini with the retrieved context
-        prompt = f"""You are an AI assistant specializing in Physical AI & Humanoid Robotics.
-        Use the following pieces of context to answer the question at the end.
-        If you don't know the answer, just say that you don't know, don't try to make up an answer.
-        Keep the answer concise but informative and cite sources when possible.
+        contextualize_q_prompt = ChatPromptTemplate.from_messages([
+            ("system", "Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question. Keep the original language."),
+            MessagesPlaceholder("chat_history"),
+            ("human", "{input}")
+        ])
 
-        Context from the Physical AI & Robotics textbook:
-        {context_str}
-
-        Question: {request.query}
-        Helpful Answer:"""
-
-        # Generate response using Gemini
-        model = genai.GenerativeModel('gemini-pro')
-        response = model.generate_content(prompt)
-
-        # Extract text from response
-        if hasattr(response, 'text'):
-            answer = response.text
-        else:
-            answer = "I was unable to generate a response. Please try again."
-
-        return RAGResponse(query=request.query, response=answer)
+        history_aware_retriever = create_history_aware_retriever(llm, retriever, contextualize_q_prompt)
+        
+        # 2.3 Final RAG Chain
+        return create_retrieval_chain(history_aware_retriever, document_chain)
 
     except Exception as e:
-        logger.error(f"Error processing RAG chat query: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Internal server error during RAG processing: {str(e)}")
+        print(f"❌ FATAL RAG CHAIN INITIALIZATION ERROR: {e}")
+        raise HTTPException(status_code=500, detail=f"Backend initialization failed: {str(e)}")
 
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+# Store the initialized RAG chain globally
+try:
+    rag_chain = initialize_rag_chain()
+except HTTPException:
+    sys.exit(1)
+
+
+# -------------------------------
+# 3. API Endpoint Definition
+# -------------------------------
+@app.post("/chat")
+async def chat_endpoint(request: ChatRequest):
+    # --- Session Retrieval/Creation ---
+    if request.session_id not in sessions:
+        sessions[request.session_id] = InMemoryChatMessageHistory()
+        for msg in request.history:
+            if msg.get('role') == 'user':
+                sessions[request.session_id].add_user_message(msg.get('content'))
+            elif msg.get('role') == 'assistant':
+                sessions[request.session_id].add_ai_message(msg.get('content'))
+
+    chat_history_store = sessions[request.session_id]
+    chat_history_messages: list[BaseMessage] = chat_history_store.messages
+
+    try:
+        # Invoke the RAG chain
+        response = await rag_chain.ainvoke({
+            "input": request.user_input,
+            "chat_history": chat_history_messages
+        })
+        
+        ai_answer = response["answer"]
+        
+        # Update history for the next turn
+        chat_history_store.add_user_message(request.user_input)
+        chat_history_store.add_ai_message(ai_answer)
+
+        # Return the response as JSON
+        return {"answer": ai_answer, "session_id": request.session_id}
+
+    except Exception as e:
+        print(f"❌ RAG Execution Error: {e}")
+        raise HTTPException(status_code=500, detail="Internal RAG chain error.")
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "message": "RAG API is running."}
