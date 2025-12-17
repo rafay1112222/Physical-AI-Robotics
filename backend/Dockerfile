@@ -1,18 +1,19 @@
-# Use a lightweight official Python image
 FROM python:3.11-slim
 
-# Set the working directory inside the container
-WORKDIR /app
+# Install system-level certificates
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    && update-ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy the requirements file and install dependencies
+WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application code
 COPY . .
 
-# Expose the port Uvicorn will run on
+# Hugging Face usually expects port 7860, but our code uses 8000. 
+# We'll set it to 8000 to match your code.
 EXPOSE 8000
 
-# Command to run the application using Uvicorn
 CMD ["uvicorn", "rag_api:app", "--host", "0.0.0.0", "--port", "8000"]
