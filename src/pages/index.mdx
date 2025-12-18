@@ -1,5 +1,5 @@
 ---
-title: 'EMBODIED INTELLIGENCE: Textbook Portal'
+title: 'EMBODIED INTELLIGENCE'
 slug: /
 hide_table_of_contents: true
 ---
@@ -8,154 +8,28 @@ import Link from '@docusaurus/Link';
 import Chatbot from '@site/src/components/Chatbot';
 
 <style>{`
-  :root {
-    --dark-bg: #0a0a12;
-    --card-bg: #121220;
-    --card-hover-bg: #1a1a2e;
-    --primary-accent: #4f46e5;
-    --secondary-accent: #8b5cf6;
-    --text-primary: #f3f4f6;
-    --text-secondary: #d1d5db;
-    --border-radius: 12px;
-    --transition-speed: 0.3s;
-  }
-
-  .hero-section {
-    background: linear-gradient(135deg, #0a0a12 0%, #1a1a2e 100%);
-    padding: 6rem 1rem;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .hero-title {
-    font-size: 3.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 1rem;
-    background: linear-gradient(90deg, #8b5cf6, #4f46e5);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .hero-subtitle {
-    font-size: 1.5rem;
-    color: var(--text-secondary);
-    margin-bottom: 2rem;
-    max-width: 800px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  .nav-button {
-    background: linear-gradient(90deg, var(--primary-accent), var(--secondary-accent));
-    color: white !important;
-    padding: 1rem 2.5rem;
-    border-radius: var(--border-radius);
-    font-size: 1.2rem;
-    text-decoration: none !important;
-    display: inline-block;
-    transition: var(--transition-speed);
-    border: none;
-    cursor: pointer;
-    font-weight: 600;
-    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
-  }
-
-  .nav-button:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(79, 70, 229, 0.6);
-  }
-
-  .section-title {
-    font-size: 2.5rem;
-    text-align: center;
-    margin: 4rem 0 2rem;
-    color: var(--text-primary);
-    position: relative;
-    padding-bottom: 1rem;
-  }
-
-  .section-title::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80px;
-    height: 4px;
-    background: linear-gradient(90deg, var(--primary-accent), var(--secondary-accent));
-    border-radius: 2px;
-  }
-
-  .card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-    padding: 0 2rem;
-    margin: 2rem 0 4rem;
-  }
-
-  .feature-card {
-    background: var(--card-bg);
-    border-radius: var(--border-radius);
-    padding: 2rem;
-    text-align: center;
-    transition: var(--transition-speed);
-    border: 1px solid rgba(79, 70, 229, 0.2);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .feature-card:hover {
-    transform: translateY(-10px);
-    background: var(--card-hover-bg);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
-  }
-
-  .feature-card h3 {
-    color: var(--primary-accent);
-    margin-bottom: 1rem;
-  }
-
-  .author-attribution {
-    text-align: center;
-    margin: 4rem 0 2rem;
-    color: var(--text-secondary);
-    font-style: italic;
-  }
+  .hero-section { background: #0a0a12; padding: 5rem 1rem; text-align: center; color: white; }
+  .hero-title { font-size: 3rem; background: linear-gradient(90deg, #8b5cf6, #4f46e5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .nav-button { background: #4f46e5; color: white !important; padding: 12px 24px; border-radius: 8px; text-decoration: none !important; font-weight: bold; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; padding: 2rem; }
+  .feature-card { background: #121220; padding: 20px; border-radius: 12px; border: 1px solid #1a1a2e; text-align: center; }
+  .author { text-align: center; margin-top: 50px; opacity: 0.7; font-style: italic; }
 `}</style>
 
 <div className="hero-section">
   <h1 className="hero-title">EMBODIED INTELLIGENCE</h1>
-  <p className="hero-subtitle">Physical AI & Humanoid Robotics - A comprehensive textbook by Abdur Rafay</p>
-  <Link className="nav-button" to="/docs/intro_physical_ai">
-    Start Reading
-  </Link>
+  <p>Physical AI & Humanoid Robotics Textbook</p>
+  <br/>
+  <Link className="nav-button" to="/docs/intro_physical_ai">Start Reading</Link>
 </div>
 
-<div className="section-container">
-  <h2 className="section-title">The AI Development Spectrum</h2>
-  <div className="card-grid">
-    <div className="feature-card">
-      <h3>ROS 2 Fundamentals</h3>
-      <p>Master the framework for building robust, distributed robotic applications.</p>
-    </div>
-    <div className="feature-card">
-      <h3>Isaac Sim</h3>
-      <p>Train AI agents in realistic simulation before physical deployment.</p>
-    </div>
-    <div className="feature-card">
-      <h3>VLA Models</h3>
-      <p>Integrate vision, language, and action into unified architectures.</p>
-    </div>
-  </div>
+<div className="card-grid">
+  <div className="feature-card"><h3>ROS 2</h3><p>Master robot communication.</p></div>
+  <div className="feature-card"><h3>Isaac Sim</h3><p>NVIDIA simulation training.</p></div>
+  <div className="feature-card"><h3>VLA Models</h3><p>Vision-Language-Action.</p></div>
 </div>
 
-<div className="author-attribution">
-  <p>Author: Abdur Rafay</p>
-</div>
+<p className="author">Author: Abdur Rafay</p>
 
-{/* CHATBOT INTEGRATION */}
+{/* THIS IS THE MAGIC LINE */}
 <Chatbot />
