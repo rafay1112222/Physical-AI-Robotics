@@ -1,8 +1,32 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useColorMode } from '@docusaurus/theme-common';
 import styles from './Chatbot.module.css';
+// Replace with the Direct URL you just copied + /chat
+// Change this to YOUR specific Hugging Face Direct URL
+// Important: It must end in /chat
+const API_URL = "https://abd9668-physical-ai-chatbot.hf.space/chat";
 
-// Function to generate and manage a session ID
+async function handleSendMessage(userInput) {
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        user_input: userInput,
+        session_id: "user-session-123", // You can make this dynamic later
+        history: [] // Pass your chat state here
+      }),
+    });
+
+    const data = await response.json();
+    return data.answer;
+  } catch (error) {
+    console.error("Connection failed:", error);
+    return "The AI is currently taking a nap. Please try again in a minute!";
+  }
+}// Function to generate and manage a session ID
 const getSessionId = () => {
     let id = localStorage.getItem('chatSessionId');
     if (!id) {
@@ -70,7 +94,8 @@ const Chatbot = () => {
             }));
 
         // 3. Construct the API payload
-        const apiEndpoint = 'http://localhost:8000/chat'; // <-- Use the direct API URL
+// 3. Construct the API payload
+const apiEndpoint = 'https://abd9668-physical-ai-chatbot.hf.space/chat';
         
         const payload = {
             user_input: userInput,

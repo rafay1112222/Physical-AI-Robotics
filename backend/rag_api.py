@@ -7,8 +7,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 
-# --- 1. SSL PATCH (Crucial for Hugging Face/Docker Slim) ---
-# This forces Python to ignore certificate verify errors if the system store is missing.
+# --- 1. SSL PATCH (Crucial for Hugging Face/Docker) ---
 try:
     _create_unverified_https_context = ssl._create_unverified_context
 except AttributeError:
@@ -24,15 +23,14 @@ from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 from langchain_classic.chains.retrieval import create_retrieval_chain
 from langchain_classic.chains.history_aware_retriever import create_history_aware_retriever
-from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
 
 # --- FastAPI Initialization ---
 app = FastAPI(title="Physical AI RAG Chatbot API")
 
-origins = ["*"]
+# Allow all origins so your GitHub Pages can talk to Hugging Face
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"], 
     allow_headers=["*"], 
@@ -45,9 +43,7 @@ class ChatRequest(BaseModel):
     session_id: str
     history: list[dict] = [] 
 
-# -------------------------------
-# 1. Configuration (with stripping for safety)
-# -------------------------------
+# --- Configuration ---
 dotenv.load_dotenv()
 QDRANT_URL = os.getenv("QDRANT_URL", "").strip()
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", "").strip()
@@ -59,16 +55,11 @@ if not all([QDRANT_URL, QDRANT_API_KEY, GEMINI_API_KEY]):
     print("❌ ERROR: Missing environment variables.")
     sys.exit(1)
 
-
-# -------------------------------
-# 2. RAG Chain Initialization
-# -------------------------------
+# --- RAG Chain Initialization ---
 def initialize_rag_chain():
     try:
-        # Initialize Qdrant
         qdrant_client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
         
-        # Patch Embeddings: Use transport="rest" if available, or rely on the SSL patch above
         embeddings_model = GoogleGenerativeAIEmbeddings(
             model="models/text-embedding-004", 
             task_type="retrieval_query", 
@@ -80,8 +71,6 @@ def initialize_rag_chain():
         )
         retriever = vectorstore.as_retriever(search_kwargs={"k": K})
 
-        # --- LLM Setup with REST transport ---
-        # "rest" is more stable in restricted container environments than gRPC
         llm = ChatGoogleGenerativeAI(
             model="gemini-1.5-flash", 
             temperature=0.3, 
@@ -109,30 +98,33 @@ Rules:
         ])
 
         history_aware_retriever = create_history_aware_retriever(llm, retriever, contextualize_q_prompt)
-        
         return create_retrieval_chain(history_aware_retriever, document_chain)
 
     except Exception as e:
         print(f"❌ FATAL RAG CHAIN INITIALIZATION ERROR: {e}")
         raise e
 
-# Initialize globally
+# Initialize global chain
 try:
     rag_chain = initialize_rag_chain()
 except Exception:
     sys.exit(1)
 
 # --- Endpoints ---
+
+@app.get("/")
+async def root():
+    return {"message": "Physical AI RAG API is live and healthy!", "port": 7860}
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
 @app.post("/chat")
 async def chat_endpoint(request: ChatRequest):
     if request.session_id not in sessions:
         sessions[request.session_id] = InMemoryChatMessageHistory()
-        for msg in request.history:
-            if msg.get('role') == 'user':
-                sessions[request.session_id].add_user_message(msg.get('content'))
-            elif msg.get('role') == 'assistant':
-                sessions[request.session_id].add_ai_message(msg.get('content'))
-
+    
     chat_history_store = sessions[request.session_id]
     
     try:
@@ -150,7 +142,3 @@ async def chat_endpoint(request: ChatRequest):
     except Exception as e:
         print(f"❌ RAG Execution Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/health")
-def health_check():
-    return {"status": "ok"}
