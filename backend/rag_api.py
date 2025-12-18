@@ -28,9 +28,16 @@ from langchain_classic.chains.history_aware_retriever import create_history_awar
 app = FastAPI(title="Physical AI RAG Chatbot API")
 
 # Allow all origins so your GitHub Pages can talk to Hugging Face
+# Allow both your local testing and your live github site
+origins = [
+    "http://localhost:3000",
+    "https://rafay1112222.github.io",
+    "*" # Keeps it open for all while you are debugging
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"], 
     allow_headers=["*"], 

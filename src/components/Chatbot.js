@@ -1,40 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useColorMode } from '@docusaurus/theme-common';
 import styles from './Chatbot.module.css';
-// Replace with the Direct URL you just copied + /chat
-// Change this to YOUR specific Hugging Face Direct URL
-// Important: It must end in /chat
+
+// --- Configuration ---
 const API_URL = "https://abd9668-physical-ai-chatbot.hf.space/chat";
 
-async function handleSendMessage(userInput) {
-  try {
-    const response = await fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        user_input: userInput,
-        session_id: "user-session-123", // You can make this dynamic later
-        history: [] // Pass your chat state here
-      }),
-    });
-
-    const data = await response.json();
-    return data.answer;
-  } catch (error) {
-    console.error("Connection failed:", error);
-    return "The AI is currently taking a nap. Please try again in a minute!";
-  }
-}// Function to generate and manage a session ID
+// Function to generate and manage a session ID
 const getSessionId = () => {
-    let id = localStorage.getItem('chatSessionId');
-    if (!id) {
-        // Generate a unique ID if one doesn't exist
+    let id = typeof window !== 'undefined' ? localStorage.getItem('chatSessionId') : null;
+    if (!id && typeof window !== 'undefined') {
         id = 'session-' + Date.now().toString(36) + Math.random().toString(36).substring(2);
         localStorage.setItem('chatSessionId', id);
     }
-    return id;
+    return id || 'default-session';
 };
 
 // Custom hook to safely get color mode with a fallback
@@ -42,7 +20,6 @@ function useSafeColorMode() {
     try {
         return useColorMode();
     } catch (error) {
-        // If context is not available, return a default state
         return { colorMode: 'light', setColorMode: () => {} };
     }
 }
@@ -60,73 +37,60 @@ const Chatbot = () => {
     const isDarkTheme = colorMode === 'dark';
 
     const toggleTheme = () => {
-        setColorMode && setColorMode(isDarkTheme ? 'light' : 'dark');
+        if (setColorMode) setColorMode(isDarkTheme ? 'light' : 'dark');
     };
 
-    const toggleChat = () => {
-        setIsOpen(!isOpen);
-    };
+    const toggleChat = () => setIsOpen(!isOpen);
 
-    const handleInputChange = (e) => {
-        setInputValue(e.target.value);
-    };
+    const handleInputChange = (e) => setInputValue(e.target.value);
 
     const handleSendMessage = async () => {
         if (!inputValue.trim()) return;
 
         const userInput = inputValue.trim();
-        // 1. Prepare local state update and UI changes
-        const userMessage = { type: 'user', content: userInput };
-        const messagesWithUser = [...messages, userMessage]; 
         
-        setMessages(messagesWithUser);
+        // 1. Update UI with User Message
+        const userMessage = { type: 'user', content: userInput };
+        const updatedMessages = [...messages, userMessage];
+        setMessages(updatedMessages);
         setInputValue('');
         setIsLoading(true);
 
-        // 2. Format history for the backend API
-        // The history sent to the API must be the previous messages, formatted for the Python side.
-        const historyPayload = messagesWithUser
-            // Slice off the last message (the current userInput)
-            .slice(0, messagesWithUser.length - 1) 
+        // 2. Format history for the backend (Python RAG API expects list of dicts)
+        const historyPayload = updatedMessages
+            .slice(0, -1) // Everything except the very last message we just added
+            .filter(msg => msg.type !== 'error') // Clean history
             .map(msg => ({
-                role: msg.type === 'user' ? 'user' : 'assistant', // Map local 'bot' to 'assistant'
+                role: msg.type === 'user' ? 'user' : 'assistant',
                 content: msg.content
             }));
 
-        // 3. Construct the API payload
-// 3. Construct the API payload
-const apiEndpoint = 'https://abd9668-physical-ai-chatbot.hf.space/chat';
-        
+        // 3. Construct API payload
         const payload = {
             user_input: userInput,
-            session_id: getSessionId(), // <-- Pass the unique session ID
-            history: historyPayload // <-- Pass the formatted history array
+            session_id: getSessionId(),
+            history: historyPayload
         };
 
         try {
-            const response = await fetch(apiEndpoint, {
-                method: 'POST', // <-- Ensures POST method is used
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             });
 
             if (!response.ok) {
-                const errorDetail = await response.json().catch(() => ({ detail: 'Unknown network/server error.' }));
-                throw new Error(`HTTP Error ${response.status}: ${errorDetail.detail}`);
+                throw new Error(`Server Error: ${response.status}`);
             }
 
             const data = await response.json();
-            const botMessage = { type: 'bot', content: data.answer }; 
-
-            // 4. Update state with the final bot answer
-            setMessages(prev => [...prev, botMessage]);
+            
+            // 4. Update UI with Bot Response
+            setMessages(prev => [...prev, { type: 'bot', content: data.answer }]);
 
         } catch (error) {
             console.error('API Error:', error);
-            const errorMessage = { type: 'bot', content: `Sorry, a communication error occurred. Details: ${error.message}` };
-            setMessages(prev => [...prev, errorMessage]);
+            setMessages(prev => [...prev, { type: 'bot', content: "Sorry, I'm having trouble connecting to my brain. Please check if the Hugging Face Space is running!" }]);
         } finally {
             setIsLoading(false);
         }
@@ -139,7 +103,6 @@ const apiEndpoint = 'https://abd9668-physical-ai-chatbot.hf.space/chat';
         }
     };
 
-    // Scroll to bottom of messages when messages change
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
@@ -157,40 +120,25 @@ const apiEndpoint = 'https://abd9668-physical-ai-chatbot.hf.space/chat';
             {isOpen && (
                 <div className={`${styles.chatbotWindow} ${isDarkTheme ? styles.darkTheme : styles.lightTheme}`}>
                     <div className={styles.chatbotHeader}>
-                        <div className={styles.chatbotTitle}>Embodied Intelligence RAG Assistant</div>
+                        <div className={styles.chatbotTitle}>Embodied Intelligence Assistant</div>
                         <div className={styles.headerActions}>
-                            <button 
-                                className={styles.themeToggle} 
-                                onClick={toggleTheme}
-                                title="Toggle theme"
-                            >
+                            <button className={styles.themeToggle} onClick={toggleTheme} title="Toggle theme">
                                 {isDarkTheme ? '☀️' : '🌙'}
                             </button>
-                            <button 
-                                className={styles.closeButton} 
-                                onClick={toggleChat}
-                                aria-label="Close chat"
-                            >
-                                ✕
-                            </button>
+                            <button className={styles.closeButton} onClick={toggleChat} aria-label="Close chat">✕</button>
                         </div>
                     </div>
                     
                     <div className={styles.chatbotMessages}>
                         {messages.map((message, index) => (
-                            <div 
-                                key={index} 
-                                className={`${styles.message} ${styles[message.type]} ${isDarkTheme ? styles.darkMode : ''}`}
-                            >
+                            <div key={index} className={`${styles.message} ${styles[message.type]} ${isDarkTheme ? styles.darkMode : ''}`}>
                                 {message.content}
                             </div>
                         ))}
                         {isLoading && (
                             <div className={`${styles.message} ${styles.bot} ${isDarkTheme ? styles.darkMode : ''}`}>
                                 <div className={styles.typingIndicator}>
-                                    <span></span>
-                                    <span></span>
-                                    <span></span>
+                                    <span></span><span></span><span></span>
                                 </div>
                             </div>
                         )}
@@ -202,7 +150,7 @@ const apiEndpoint = 'https://abd9668-physical-ai-chatbot.hf.space/chat';
                             value={inputValue}
                             onChange={handleInputChange}
                             onKeyDown={handleKeyDown}
-                            placeholder="Ask about the textbook..."
+                            placeholder="Ask about Physical AI..."
                             className={styles.chatbotInput}
                             rows="1"
                         />
